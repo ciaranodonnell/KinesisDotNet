@@ -26,7 +26,11 @@ namespace DemoApp.EventConsumer
 
         public static void InitialMain(string[] args)
         {
+            var service = new EventConsumerService(new KinesisClient("DemoApp", "us-east-1"));
 
+            service.Run();
+
+            Console.ReadLine();
         }
 
 

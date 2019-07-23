@@ -83,18 +83,17 @@ namespace COD.Kinesis.Client
                     // is interpreted as UTF-8 characters.
                     data = serializer.Deserialize<TMessage>(rec.Data, rec.Data.Length);
 
-
                     // Your own logic to process a record goes here.
                     HandleMessage(data);
-
-
+                    
                     processedSuccessfully = true;
-                    break;
+                   
                 }
                 catch (Exception e)
                 {
-                    Console.Error.WriteLine("Exception processing record data: " + data, e);
-                    //Back off before retrying upon an exception.
+                    //Console.Error.WriteLine("Exception processing record data: " + data, e);
+
+                    HandleProcessingFailure(rec, e);
 
                 }
 
@@ -105,10 +104,9 @@ namespace COD.Kinesis.Client
             }
         }
 
-
-
+        
         protected abstract void HandleMessage(TMessage message);
-        protected abstract void HandleProcessingFailure(Record record);
+        protected abstract void HandleProcessingFailure(Record record, Exception exceptionEncountered);
 
 
         /// <summary>

@@ -14,9 +14,11 @@ namespace DemoApp.EventConsumer
 
         public EventConsumerService(IKinesisClient kinesisClient)
         {
-
             this.kinesisClient = kinesisClient;
+        }
 
+        public void Run()
+        {
             HostTheWebEndpoint();
 
             StartSubscribingToStream();
@@ -29,7 +31,7 @@ namespace DemoApp.EventConsumer
 
         public void Dispose()
         {
-            if(webThread != null)
+            if (webThread != null)
             {
                 DemoApp.Web.Program.StopWebsite().Wait();
                 subscription.Dispose();
@@ -38,6 +40,7 @@ namespace DemoApp.EventConsumer
 
         private void HostTheWebEndpoint()
         {
+            //Do this in a thread so you can do other processing.
             this.webThread = new Thread(new ThreadStart(() =>
             {
 

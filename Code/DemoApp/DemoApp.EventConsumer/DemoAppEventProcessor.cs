@@ -17,12 +17,12 @@ namespace DemoApp.EventConsumer
 
         protected override void HandleMessage(DemoAppEvent message)
         {
-            
+            Console.WriteLine("Message Received: " + Newtonsoft.Json.JsonConvert.SerializeObject(message));
         }
 
-        protected override void HandleProcessingFailure(Record record)
+        protected override void HandleProcessingFailure(Record record, Exception exceptionEncountered)
         {
-            
+            Console.WriteLine($"Message Error: {exceptionEncountered.ToString()} - " + Encoding.UTF8.GetString(record.Data));
         }
     }
 }
