@@ -9,7 +9,7 @@ namespace COD.Kinesis.Client
     /// This is an idea about creating a producer that doesnt need re-initializing
     /// </summary>
     /// <typeparam name="TMessage"></typeparam>
-    internal interface IMessageProducer<TMessage>
+    public interface IMessageProducer<TMessage> : IDisposable
     {
 
         Task SendMessageAsync(TMessage message);
