@@ -1,4 +1,5 @@
 ﻿using Amazon.Kinesis.ClientLibrary;
+using COD.Kinesis.Client.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,7 +7,7 @@ using System.Threading;
 
 namespace COD.Kinesis.Client
 {
-    public abstract class SimpleRecordProcessor : IShardRecordProcessor
+    public abstract class SimpleRecordProcessor<TMessage> : IShardRecordProcessor where TMessage : class
     {
         /// <value>The time to wait before this record processor
         /// reattempts either a checkpoint, or the processing of a record.</value>
@@ -25,6 +26,12 @@ namespace COD.Kinesis.Client
 
         /// <value>The next checkpoint time expressed in milliseconds.</value>
         private DateTime _nextCheckpointTime = DateTime.UtcNow;
+        private IMessageSerializer serializer;
+
+        protected SimpleRecordProcessor(IMessageSerializer serializer)
+        {
+            this.serializer = serializer;
+        }
 
         /// <summary>
         /// This method is invoked by the Amazon Kinesis Client Library before records from the specified shard
@@ -63,36 +70,32 @@ namespace COD.Kinesis.Client
         /// This method processes records, performing retries as needed.
         /// </summary>
         /// <param name="records">The records to be processed.</param>
-        protected virtual void ProcessReceivedRecords(List<Record> records)
+        protected void ProcessReceivedRecords(List<Record> records)
         {
             foreach (Record rec in records)
             {
                 bool processedSuccessfully = false;
-                string data = null;
-                for (int i = 0; i < NumRetries; ++i)
+                TMessage data = null;
+
+                try
                 {
-                    try
-                    {
-                        // As per the accompanying AmazonKinesisSampleProducer.cs, the payload
-                        // is interpreted as UTF-8 characters.
-                        data = System.Text.Encoding.UTF8.GetString(rec.Data);
+                    // As per the accompanying AmazonKinesisSampleProducer.cs, the payload
+                    // is interpreted as UTF-8 characters.
+                    data = serializer.Deserialize<TMessage>(rec.Data, rec.Data.Length);
 
-                        // Uncomment the following if you wish to see the retrieved record data.
-                        Console.Error.WriteLine(
-                            String.Format("Retrieved record:\n\tpartition key = {0},\n\tsequence number = {1},\n\tdata = {2}",
-                            rec.PartitionKey, rec.SequenceNumber, data));
 
-                        // Your own logic to process a record goes here.
+                    // Your own logic to process a record goes here.
+                    HandleMessage(data);
 
-                        processedSuccessfully = true;
-                        break;
-                    }
-                    catch (Exception e)
-                    {
-                        Console.Error.WriteLine("Exception processing record data: " + data, e);
-                        //Back off before retrying upon an exception.
-                        Thread.Sleep(Backoff);
-                    }
+
+                    processedSuccessfully = true;
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Console.Error.WriteLine("Exception processing record data: " + data, e);
+                    //Back off before retrying upon an exception.
+
                 }
 
                 if (!processedSuccessfully)
@@ -104,6 +107,7 @@ namespace COD.Kinesis.Client
 
 
 
+        protected abstract void HandleMessage(TMessage message);
         protected abstract void HandleProcessingFailure(Record record);
 
 

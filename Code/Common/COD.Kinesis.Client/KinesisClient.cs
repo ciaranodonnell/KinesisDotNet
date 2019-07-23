@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace COD.Kinesis.Client
 {
-    public class KinesisClient
+    public class KinesisClient : IKinesisClient
     {
         private string appName;
         private string regionName;

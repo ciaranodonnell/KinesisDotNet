@@ -32,7 +32,7 @@ namespace DemoApp.EventProducer
             }
 
             Console.WriteLine();
-            Console.WriteLine("all messages send");
+            Console.WriteLine("all messages sent");
             Console.ReadLine();
 
 
