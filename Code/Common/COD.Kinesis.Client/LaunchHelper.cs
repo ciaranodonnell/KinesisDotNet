@@ -19,7 +19,7 @@ namespace COD.Kinesis.Client
             public const string SignalRHubAddressIdentifier = "signalrhub";
 
 
-            [Option('s', StreamNameIdentifier)]
+            [Option('s', StreamNameIdentifier, Required = true)]
             public string StreamName { get; set; }
 
             [Option('h', SignalRHubAddressIdentifier)]
@@ -79,7 +79,7 @@ namespace COD.Kinesis.Client
                 commandLine += " " + string.Join(" ", requiredArgs);
             }
 
-            commandLine += " --" + ProcessLaunchOptions.StreamNameIdentifier;
+            commandLine += " consumer --" + ProcessLaunchOptions.StreamNameIdentifier;
             commandLine += " " + streamName;
 
 
