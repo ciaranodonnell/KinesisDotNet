@@ -26,7 +26,7 @@ namespace DemoApp.EventConsumer
 
         private void StartSubscribingToStream()
         {
-            this.subscription = kinesisClient.SubscribeToStream("eventstream1", "DemoConsumer");
+            this.subscription = kinesisClient.SubscribeToStream("eventstream1");
         }
 
         public void Dispose()
