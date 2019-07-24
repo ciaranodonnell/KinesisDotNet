@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using Amazon.Kinesis.ClientLibrary;
 using COD.Kinesis.Client.Serialization;
 using CommandLine;
@@ -67,7 +68,7 @@ namespace COD.Kinesis.Client
             string commandLine;
             if (Process.GetCurrentProcess().ProcessName == "dotnet")
             {
-                commandLine = "dotnet " + new System.Diagnostics.StackTrace(1).GetFrame(0).GetMethod().DeclaringType.Assembly.Location;
+                commandLine = "dotnet " + BootStrapper.CleanFilePath(new StackTrace(2).GetFrame(0).GetMethod().DeclaringType.Assembly.Location);
             }
             else
             {
@@ -87,5 +88,7 @@ namespace COD.Kinesis.Client
 
 
         }
+
+       
     }
 }

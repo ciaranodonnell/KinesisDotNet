@@ -185,7 +185,7 @@ namespace COD.Kinesis.Client
                 {
                     java,
                     "-cp",
-                    javaClassPath,
+                    CleanFilePath(javaClassPath),
                     "software.amazon.kinesis.multilang.MultiLangDaemon",
                     "-p",
                     options.PropertiesFile
@@ -225,10 +225,28 @@ namespace COD.Kinesis.Client
         private static void WriteKCLPropertiesFile(KinesisConsumerOptions options)
         {
             //TODO: Check if the file exists. Potentially this will need to be removed once its complete 
-
-            var kclTemplate = new StreamReader(typeof(BootStrapper).Assembly.GetManifestResourceStream("kcl.properties")).ReadToEnd();
+            var kclTemplate = new StreamReader(new MemoryStream(Resources.kcl_properties)).ReadToEnd();
             var kclFile = string.Format(kclTemplate, options.ConsumerProgramCommandLine, options.StreamName, options.ApplicationName, options.StartPosition.ToString(), options.RegionName);
             File.WriteAllText(options.PropertiesFile, kclFile);
         }
-    }
+
+        internal static string CleanFilePath(string location)
+        {
+            if (location.IndexOf(' ') > -1
+                || location.IndexOf('\'') > -1
+                || location.IndexOf('\"') > -1)
+            {
+                if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+                {
+                    return "\"" + location.Replace("\"", "\"\"") + "\"";
+                }
+                else
+                {
+                    return "$\'" + location.Replace("\'", "\\\'").Replace("\"", "\\\"") + "\'";
+                }
+            }
+
+            return location;
+        }
+        }
 }

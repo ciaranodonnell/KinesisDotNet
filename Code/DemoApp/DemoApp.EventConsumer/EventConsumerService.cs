@@ -19,7 +19,7 @@ namespace DemoApp.EventConsumer
 
         public void Run()
         {
-            HostTheWebEndpoint();
+         //   HostTheWebEndpoint();
 
             StartSubscribingToStream();
         }
