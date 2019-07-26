@@ -11,18 +11,16 @@ namespace COD.Kinesis.Client
     {
         /// <value>The time to wait before this record processor
         /// reattempts either a checkpoint, or the processing of a record.</value>
-        private static readonly TimeSpan Backoff = TimeSpan.FromSeconds(3);
+        protected TimeSpan Backoff { get; set; } = TimeSpan.FromSeconds(3);
 
         /// <value>The interval this record processor waits between
         /// doing two successive checkpoints.</value>
-        private static readonly TimeSpan CheckpointInterval = TimeSpan.FromMinutes(1);
-
-        /// <value>The maximum number of times this record processor retries either
-        /// a failed checkpoint, or the processing of a record that previously failed.</value>
-        private static readonly int NumRetries = 10;
-
+        protected TimeSpan CheckpointInterval { get; set; } = TimeSpan.FromMinutes(1);
+        
         /// <value>The shard ID on which this record processor is working.</value>
-        private string _kinesisShardId;
+        protected string KinesisShardId { get; set; }
+
+        protected int NumOfRetries { get; set; } = 5;
 
         /// <value>The next checkpoint time expressed in milliseconds.</value>
         private DateTime _nextCheckpointTime = DateTime.UtcNow;
@@ -44,7 +42,7 @@ namespace COD.Kinesis.Client
         public void Initialize(InitializationInput input)
         {
             Console.Error.WriteLine("Initializing record processor for shard: " + input.ShardId);
-            this._kinesisShardId = input.ShardId;
+            this.KinesisShardId = input.ShardId;
         }
 
         /// <summary>
@@ -79,8 +77,7 @@ namespace COD.Kinesis.Client
 
                 try
                 {
-                    // As per the accompanying AmazonKinesisSampleProducer.cs, the payload
-                    // is interpreted as UTF-8 characters.
+                    // Use the passed in serializer to interpret the message
                     data = serializer.Deserialize<TMessage>(rec.Data, rec.Data.Length);
 
                     // Your own logic to process a record goes here.
@@ -99,7 +96,9 @@ namespace COD.Kinesis.Client
 
                 if (!processedSuccessfully)
                 {
-                    Console.Error.WriteLine("Couldn't process record " + rec + ". Skipping the record.");
+                   //TODO: Decide what to do when message processing fails
+                   //The answer is probably explode and die
+                   // However the best way to do this is probably to just throw and exception from HandleProcessingFailure in the derived classes.
                 }
             }
         }
@@ -115,13 +114,13 @@ namespace COD.Kinesis.Client
         /// <param name="checkpointer">The checkpointer used to do checkpoints.</param>
         private void Checkpoint(Checkpointer checkpointer)
         {
-            Console.Error.WriteLine("Checkpointing shard " + _kinesisShardId);
+            Console.Error.WriteLine("Checkpointing shard " + KinesisShardId);
 
             // You can optionally provide an error handling delegate to be invoked when checkpointing fails.
             // The library comes with a default implementation that retries for a number of times with a fixed
             // delay between each attempt. If you do not provide an error handler, the checkpointing operation
             // will not be retried, but processing will continue.
-            checkpointer.Checkpoint(RetryingCheckpointErrorHandler.Create(NumRetries, Backoff));
+            checkpointer.Checkpoint(RetryingCheckpointErrorHandler.Create(NumOfRetries, Backoff));
         }
 
         public void LeaseLost(LeaseLossInput leaseLossInput)
@@ -129,7 +128,7 @@ namespace COD.Kinesis.Client
             //
             // Perform any necessary cleanup after losing your lease.  Checkpointing is not possible at this point.
             //
-            Console.Error.WriteLine($"Lost lease on {_kinesisShardId}");
+            Console.Error.WriteLine($"Lost lease on {KinesisShardId}");
         }
 
         public void ShardEnded(ShardEndedInput shardEndedInput)
@@ -139,13 +138,13 @@ namespace COD.Kinesis.Client
             // KCL requires that you checkpoint one final time using the default checkpoint value.
             //
             Console.Error.WriteLine(
-                $"All records for {_kinesisShardId} have been processed, starting final checkpoint");
+                $"All records for {KinesisShardId} have been processed, starting final checkpoint");
             shardEndedInput.Checkpointer.Checkpoint();
         }
 
         public void ShutdownRequested(ShutdownRequestedInput shutdownRequestedInput)
         {
-            Console.Error.WriteLine($"Shutdown has been requested for {_kinesisShardId}. Checkpointing");
+            Console.Error.WriteLine($"Shutdown has been requested for {KinesisShardId}. Checkpointing");
             shutdownRequestedInput.Checkpointer.Checkpoint();
         }
     }
